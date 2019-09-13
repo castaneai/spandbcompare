@@ -72,3 +72,37 @@ func TestCompare_Diff(t *testing.T) {
 		assert.NotContains(t, diff.Rows2[0].ColumnValues, "age")
 	}
 }
+
+func TestCompare_DiffWithCompositePrimaryKeys(t *testing.T) {
+	pks := []string{"id1", "id2"}
+
+	{
+		rows1 := []*Row{{pks, map[string]ColumnValue{"id1": "A", "id2": "A1", "name": "na"}}}
+		rows2 := []*Row{{pks, map[string]ColumnValue{"id1": "A", "id2": "A1", "name": "nb"}}}
+		diff, err := Compare(rows1, rows2, &AsStringComparator{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, true, diff.HasDiff())
+		assert.Equal(t, 0, len(diff.Rows1Only))
+		assert.Equal(t, 0, len(diff.Rows2Only))
+		assert.Equal(t, 1, len(diff.Rows1))
+		assert.Equal(t, 1, len(diff.Rows2))
+		assert.Equal(t, "na", diff.Rows1[0].ColumnValues["name"])
+		assert.Equal(t, "nb", diff.Rows2[0].ColumnValues["name"])
+	}
+
+	{
+		rows1 := []*Row{{pks, map[string]ColumnValue{"id1": "A", "id2": "A1", "name": "na"}}}
+		rows2 := []*Row{{pks, map[string]ColumnValue{"id1": "A", "id2": "A2", "name": "na"}}}
+		diff, err := Compare(rows1, rows2, &AsStringComparator{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, true, diff.HasDiff())
+		assert.Equal(t, 1, len(diff.Rows1Only))
+		assert.Equal(t, 1, len(diff.Rows2Only))
+		assert.Equal(t, 0, len(diff.Rows1))
+		assert.Equal(t, 0, len(diff.Rows2))
+	}
+}
