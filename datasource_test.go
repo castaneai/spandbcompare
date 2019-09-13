@@ -56,7 +56,7 @@ func TestDataSource_Rows(t *testing.T) {
 			t.Fatal(err)
 		}
 		assert.Equal(t, 2, len(rows))
-		assert.Equal(t, "singerA", rows[0]["SingerID"])
-		assert.Equal(t, "singerB-name", rows[1]["FirstName"])
+		assert.Equal(t, "singerA", rows[0].ColumnValues["SingerID"])
+		assert.Equal(t, "singerB-name", rows[1].ColumnValues["FirstName"])
 	}
 }
