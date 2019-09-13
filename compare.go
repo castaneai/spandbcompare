@@ -6,9 +6,6 @@ import (
 	"reflect"
 )
 
-type Result interface {
-}
-
 type Comparator interface {
 	Compare(a, b interface{}) bool
 }
