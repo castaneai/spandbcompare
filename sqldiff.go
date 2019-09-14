@@ -2,6 +2,7 @@ package spanner_compare
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 )
@@ -36,20 +37,24 @@ func insertSQL(table string, rows []*Row) []string {
 		return nil
 	}
 
-	var colss []string
+	var cols []string
+	var qcols []string
 	for cn, _ := range rows[0].ColumnValues {
-		colss = append(colss, fmt.Sprintf("`%s`", cn))
+		cols = append(cols, cn)
+		qcols = append(qcols, fmt.Sprintf("`%s`", cn))
 	}
+	sort.Strings(cols)
+	sort.Strings(qcols)
 
 	var vals []string
 	for _, row := range rows {
 		var valss []string
-		for _, cv := range row.ColumnValues {
-			valss = append(valss, fmt.Sprintf("%s", literal(cv)))
+		for _, cn := range cols {
+			valss = append(valss, fmt.Sprintf("%s", literal(row.ColumnValues[cn])))
 		}
 		vals = append(vals, fmt.Sprintf("(%s)", strings.Join(valss, ",")))
 	}
-	return []string{fmt.Sprintf("INSERT INTO `%s` (%s) VALUES %s", table, strings.Join(colss, ","), strings.Join(vals, ","))}
+	return []string{fmt.Sprintf("INSERT INTO `%s` (%s) VALUES %s", table, strings.Join(qcols, ","), strings.Join(vals, ","))}
 }
 
 func updateSQL(table string, rows []*Row) []string {
@@ -95,7 +100,10 @@ func literal(cv ColumnValue) string {
 		return fmt.Sprintf("'%s'", cv)
 	case time.Time:
 		return fmt.Sprintf("'%s'", cv.(time.Time).Format(time.RFC3339Nano))
+	case float32, float64, *float32, *float64:
+		// https://stackoverflow.com/questions/48337330/how-to-print-float-as-string-in-golang-without-scientific-notation
+		return fmt.Sprintf("%f", cv)
 	default:
-		return fmt.Sprintf("%s", cv)
+		return fmt.Sprintf("%v", cv)
 	}
 }
