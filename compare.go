@@ -76,23 +76,11 @@ type RowDiff struct {
 	Row2       *Row
 }
 
-// Differences among rows
-// set nil if there is no differences
-type Diff struct {
-	Rows1Only []*Row
-	Rows2Only []*Row
-	DiffRows  []*RowDiff
-}
-
-func (d *Diff) HasDiff() bool {
-	return len(d.Rows1Only) > 0 || len(d.Rows2Only) > 0 || len(d.DiffRows) > 0
-}
-
-func Compare(rows1, rows2 []*Row, cmp RowComparator) (*Diff, error) {
+func CompareRows(rows1, rows2 []*Row, cmp RowComparator) (*RowsDiff, error) {
 	rows1Map := rowsToPKMap(rows1)
 	rows2Map := rowsToPKMap(rows2)
 
-	diff := &Diff{}
+	diff := &RowsDiff{}
 	for pks, row1 := range rows1Map {
 		row2, exists2 := rows2Map[pks]
 		if !exists2 {

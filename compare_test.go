@@ -10,7 +10,7 @@ func TestCompare_NoDiff(t *testing.T) {
 	pks := []string{"id"}
 	rows1 := []*Row{{pks, map[string]ColumnValue{"id": "a", "name": "a"}}}
 	rows2 := []*Row{{pks, map[string]ColumnValue{"id": "a", "name": "a"}}}
-	diff, err := Compare(rows1, rows2, &DefaultRowComparator{})
+	diff, err := CompareRows(rows1, rows2, &DefaultRowComparator{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -23,7 +23,7 @@ func TestCompare_OnlyDiff(t *testing.T) {
 	{
 		rows1 := []*Row{{pks, map[string]ColumnValue{"id": "a", "name": "a"}}}
 		rows2 := []*Row(nil)
-		diff, err := Compare(rows1, rows2, &DefaultRowComparator{})
+		diff, err := CompareRows(rows1, rows2, &DefaultRowComparator{})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -36,7 +36,7 @@ func TestCompare_OnlyDiff(t *testing.T) {
 	{
 		rows1 := []*Row(nil)
 		rows2 := []*Row{{pks, map[string]ColumnValue{"id": "a", "name": "a"}}}
-		diff, err := Compare(rows1, rows2, &DefaultRowComparator{})
+		diff, err := CompareRows(rows1, rows2, &DefaultRowComparator{})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -53,7 +53,7 @@ func TestCompare_Diff(t *testing.T) {
 	{
 		rows1 := []*Row{{pks, map[string]ColumnValue{"id": "a", "name": "na", "age": 1}}}
 		rows2 := []*Row{{pks, map[string]ColumnValue{"id": "a", "name": "nb", "age": 1}}}
-		diff, err := Compare(rows1, rows2, &DefaultRowComparator{})
+		diff, err := CompareRows(rows1, rows2, &DefaultRowComparator{})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -77,7 +77,7 @@ func TestCompare_DiffWithCompositePrimaryKeys(t *testing.T) {
 	{
 		rows1 := []*Row{{pks, map[string]ColumnValue{"id1": "A", "id2": "A1", "name": "na"}}}
 		rows2 := []*Row{{pks, map[string]ColumnValue{"id1": "A", "id2": "A1", "name": "nb"}}}
-		diff, err := Compare(rows1, rows2, &DefaultRowComparator{})
+		diff, err := CompareRows(rows1, rows2, &DefaultRowComparator{})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -93,7 +93,7 @@ func TestCompare_DiffWithCompositePrimaryKeys(t *testing.T) {
 	{
 		rows1 := []*Row{{pks, map[string]ColumnValue{"id1": "A", "id2": "A1", "name": "na"}}}
 		rows2 := []*Row{{pks, map[string]ColumnValue{"id1": "A", "id2": "A2", "name": "na"}}}
-		diff, err := Compare(rows1, rows2, &DefaultRowComparator{})
+		diff, err := CompareRows(rows1, rows2, &DefaultRowComparator{})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -110,7 +110,7 @@ func TestCompare_DiffWithIgnoreColumns(t *testing.T) {
 	{
 		rows1 := []*Row{{pks, map[string]ColumnValue{"id": "a", "name": "na", "age": 1}}}
 		rows2 := []*Row{{pks, map[string]ColumnValue{"id": "a", "name": "nb", "age": 2}}}
-		diff, err := Compare(rows1, rows2, &DefaultRowComparator{IgnoreColumns: []string{"age"}})
+		diff, err := CompareRows(rows1, rows2, &DefaultRowComparator{IgnoreColumns: []string{"age"}})
 		if err != nil {
 			t.Fatal(err)
 		}
