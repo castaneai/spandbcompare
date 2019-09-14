@@ -48,7 +48,7 @@ func fmtval(v spanner_compare.ColumnValue) string {
 }
 
 func writeAddedView(w io.Writer, cols []string, rows []*spanner_compare.Row) error {
-	added := color.New(color.FgHiGreen).FprintfFunc()
+	added := color.New(colorAdded).FprintfFunc()
 	cfmt := colfmt(cols)
 
 	for i, row := range rows {
