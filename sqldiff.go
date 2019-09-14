@@ -71,7 +71,15 @@ func updateSQL(table string, rows []*Row) []string {
 
 		var sets []string
 		for cn, cv := range row.ColumnValues {
-			sets = append(sets, fmt.Sprintf("`%s` = %s", cn, literal(cv)))
+			skip := false
+			for _, pkn := range row.pkColNames {
+				if cn == pkn {
+					skip = true
+				}
+			}
+			if !skip {
+				sets = append(sets, fmt.Sprintf("`%s` = %s", cn, literal(cv)))
+			}
 		}
 		sqls = append(sqls, fmt.Sprintf("UPDATE `%s` SET %s WHERE %s", table, strings.Join(sets, ","), strings.Join(wheres, " and ")))
 	}
