@@ -1,2 +1,2 @@
-# spanner-compare
-Comparing two Spanner tables
+# spancompare
+Compare two Cloud Spanner tables
