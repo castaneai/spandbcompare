@@ -3,37 +3,11 @@ package spancompare
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/castaneai/spankeys"
 
 	"cloud.google.com/go/spanner"
 )
-
-type ColumnValue interface{}
-
-type Row struct {
-	PKCols       []string
-	ColumnValues map[string]ColumnValue
-}
-
-func (r *Row) PrimaryKey() PrimaryKey {
-	var pk PrimaryKey
-	for _, pkcn := range r.PKCols {
-		pk = append(pk, r.ColumnValues[pkcn])
-	}
-	return pk
-}
-
-type PrimaryKey []interface{}
-
-func (pk PrimaryKey) String() string {
-	var ks []string
-	for _, k := range pk {
-		ks = append(ks, fmt.Sprintf("%s", k))
-	}
-	return strings.Join(ks, "_")
-}
 
 type DataSource struct {
 	client     *spanner.Client
@@ -73,10 +47,10 @@ func (s *DataSource) Rows(ctx context.Context) ([]*Row, error) {
 	return rows, nil
 }
 
-func makeRow(r *spanner.Row, pkColNames []string) (*Row, error) {
+func makeRow(r *spanner.Row, pkCols []string) (*Row, error) {
 	row := &Row{
 		ColumnValues: make(map[string]ColumnValue),
-		PKCols:       pkColNames,
+		PKCols:       pkCols,
 	}
 	for _, cn := range r.ColumnNames() {
 		var gcv spanner.GenericColumnValue
