@@ -1,4 +1,4 @@
-package spanner_compare
+package spancompare
 
 import (
 	"fmt"
@@ -65,14 +65,14 @@ func updateSQL(table string, rows []*Row) []string {
 	var sqls []string
 	for _, row := range rows {
 		var wheres []string
-		for _, pkn := range row.pkColNames {
+		for _, pkn := range row.PKCols {
 			wheres = append(wheres, fmt.Sprintf("`%s` = %s", pkn, literal(row.ColumnValues[pkn])))
 		}
 
 		var sets []string
 		for cn, cv := range row.ColumnValues {
 			skip := false
-			for _, pkn := range row.pkColNames {
+			for _, pkn := range row.PKCols {
 				if cn == pkn {
 					skip = true
 				}
@@ -94,7 +94,7 @@ func deleteSQL(table string, rows []*Row) []string {
 	var sqls []string
 	for _, row := range rows {
 		var wheres []string
-		for _, pkn := range row.pkColNames {
+		for _, pkn := range row.PKCols {
 			wheres = append(wheres, fmt.Sprintf("`%s` = %s", pkn, literal(row.ColumnValues[pkn])))
 		}
 		sqls = append(sqls, fmt.Sprintf("DELETE FROM `%s` WHERE %s", table, strings.Join(wheres, " and ")))

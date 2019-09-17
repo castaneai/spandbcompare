@@ -6,7 +6,8 @@ import (
 	"strings"
 	"time"
 
-	spanner_compare "github.com/castaneai/spanner-compare"
+	"github.com/castaneai/spancompare"
+
 	"github.com/fatih/color"
 )
 
@@ -30,7 +31,7 @@ func currentTz() *time.Location {
 	return time.FixedZone(name, offset)
 }
 
-func fmtval(v spanner_compare.ColumnValue) string {
+func fmtval(v spancompare.ColumnValue) string {
 	// Timestamp 型は format, timezone を統一して表示
 	if v == nil {
 		return "<NULL>"
@@ -47,7 +48,13 @@ func fmtval(v spanner_compare.ColumnValue) string {
 	return strings.Replace(fmt.Sprintf("%v", v), "\n", "\\n", -1)
 }
 
-func writeAddedView(w io.Writer, cols []string, rows []*spanner_compare.Row) error {
+type DiffViewer interface {
+	Write(w io.Writer, cols []string, rows []*spancompare.Row) error
+}
+
+type DiffAdded struct{}
+
+func (d *DiffAdded) Write(w io.Writer, cols []string, rows []*spancompare.Row) error {
 	added := color.New(colorAdded).FprintfFunc()
 	cfmt := colfmt(cols)
 
@@ -57,5 +64,7 @@ func writeAddedView(w io.Writer, cols []string, rows []*spanner_compare.Row) err
 			added(w, "+ "+cfmt+": %s\n", cn, fmtval(row.ColumnValues[cn]))
 		}
 	}
+	fmt.Fprintf(w, "  %d rows\n", len(rows))
+	fmt.Fprintln(w)
 	return nil
 }

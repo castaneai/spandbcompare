@@ -1,4 +1,4 @@
-package spanner_compare
+package spancompare
 
 import (
 	"context"
@@ -13,13 +13,13 @@ import (
 type ColumnValue interface{}
 
 type Row struct {
-	pkColNames   []string
+	PKCols       []string
 	ColumnValues map[string]ColumnValue
 }
 
 func (r *Row) PrimaryKey() PrimaryKey {
 	var pk PrimaryKey
-	for _, pkcn := range r.pkColNames {
+	for _, pkcn := range r.PKCols {
 		pk = append(pk, r.ColumnValues[pkcn])
 	}
 	return pk
@@ -76,7 +76,7 @@ func (s *DataSource) Rows(ctx context.Context) ([]*Row, error) {
 func makeRow(r *spanner.Row, pkColNames []string) (*Row, error) {
 	row := &Row{
 		ColumnValues: make(map[string]ColumnValue),
-		pkColNames:   pkColNames,
+		PKCols:       pkColNames,
 	}
 	for _, cn := range r.ColumnNames() {
 		var gcv spanner.GenericColumnValue

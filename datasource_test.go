@@ -1,4 +1,4 @@
-package spanner_compare
+package spancompare
 
 import (
 	"context"

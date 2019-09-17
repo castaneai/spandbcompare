@@ -1,4 +1,4 @@
-package spanner_compare
+package spancompare
 
 // TablesDiff represents differences between two tables
 type TablesDiff struct {

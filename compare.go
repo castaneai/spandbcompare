@@ -1,4 +1,4 @@
-package spanner_compare
+package spancompare
 
 import (
 	"errors"
@@ -16,19 +16,19 @@ type DefaultRowComparator struct {
 
 func (cmp *DefaultRowComparator) Compare(row1, row2 *Row) (*RowDiff, error) {
 	irow1 := &Row{
-		pkColNames:   row1.pkColNames,
+		PKCols:       row1.PKCols,
 		ColumnValues: make(map[string]ColumnValue),
 	}
 	irow2 := &Row{
-		pkColNames:   row1.pkColNames,
+		PKCols:       row1.PKCols,
 		ColumnValues: make(map[string]ColumnValue),
 	}
-	if !reflect.DeepEqual(irow1.pkColNames, irow2.pkColNames) {
+	if !reflect.DeepEqual(irow1.PKCols, irow2.PKCols) {
 		return nil, errors.New("the primary key of pair of rows must be the same")
 	}
 	var pk PrimaryKey
 	// always includes the primary keys
-	for _, pkcn := range irow1.pkColNames {
+	for _, pkcn := range irow1.PKCols {
 		pk = append(pk, row1.ColumnValues[pkcn])
 		irow1.ColumnValues[pkcn] = row1.ColumnValues[pkcn]
 		irow2.ColumnValues[pkcn] = row2.ColumnValues[pkcn]
@@ -56,7 +56,7 @@ func (cmp *DefaultRowComparator) Compare(row1, row2 *Row) (*RowDiff, error) {
 		}
 	}
 	// check whether column value has diff excluding primary key
-	if len(irow1.ColumnValues) <= len(irow1.pkColNames) || len(irow2.ColumnValues) <= len(irow2.pkColNames) {
+	if len(irow1.ColumnValues) <= len(irow1.PKCols) || len(irow2.ColumnValues) <= len(irow2.PKCols) {
 		return nil, nil
 	}
 	return &RowDiff{
