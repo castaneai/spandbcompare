@@ -65,6 +65,38 @@ func (ud *UnifiedDiff) printf(format string, a ...interface{}) {
 	fmt.Fprintf(ud.w, format, a...)
 }
 
+func (ud *UnifiedDiff) Write(diff *spancompare.TablesDiff, changesFor string) error {
+	var before, after string
+	var added, deleted []*spancompare.Row
+	switch changesFor {
+	case diff.Table1:
+		before = diff.Table1
+		after = diff.Table2
+		added = diff.RowsDiff.Rows2Only
+		deleted = diff.RowsDiff.Rows1Only
+		break
+	case diff.Table2:
+		before = diff.Table2
+		after = diff.Table1
+		added = diff.RowsDiff.Rows1Only
+		deleted = diff.RowsDiff.Rows2Only
+		break
+	default:
+		return fmt.Errorf("changesFor must be %s or %s", diff.Table1, diff.Table2)
+	}
+
+	if err := ud.WriteUpdated(before, after, diff.RowsDiff.DiffRows); err != nil {
+		return err
+	}
+	if err := ud.WriteAdded(added); err != nil {
+		return err
+	}
+	if err := ud.WriteDeleted(deleted); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (ud *UnifiedDiff) WriteAdded(rows []*spancompare.Row) error {
 	added := color.New(colorAdded).FprintfFunc()
 	cfmt := colfmt(ud.cols)
