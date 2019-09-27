@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/castaneai/spancompare"
+	"github.com/castaneai/spandbcompare"
 
 	"github.com/fatih/color"
 )
@@ -32,7 +32,7 @@ func currentTz() *time.Location {
 	return time.FixedZone(name, offset)
 }
 
-func fmtval(v spancompare.ColumnValue) string {
+func fmtval(v spandbcompare.ColumnValue) string {
 	// Timestamp 型は format, timezone を統一して表示
 	if v == nil {
 		return "<NULL>"
@@ -65,9 +65,9 @@ func (ud *UnifiedDiff) printf(format string, a ...interface{}) {
 	fmt.Fprintf(ud.w, format, a...)
 }
 
-func (ud *UnifiedDiff) Write(diff *spancompare.TablesDiff, changesFor string) error {
+func (ud *UnifiedDiff) Write(diff *spandbcompare.TablesDiff, changesFor string) error {
 	var before, after string
-	var added, deleted []*spancompare.Row
+	var added, deleted []*spandbcompare.Row
 	switch changesFor {
 	case diff.Table1:
 		before = diff.Table1
@@ -97,7 +97,7 @@ func (ud *UnifiedDiff) Write(diff *spancompare.TablesDiff, changesFor string) er
 	return nil
 }
 
-func (ud *UnifiedDiff) WriteAdded(rows []*spancompare.Row) error {
+func (ud *UnifiedDiff) WriteAdded(rows []*spandbcompare.Row) error {
 	added := color.New(colorAdded).FprintfFunc()
 	cfmt := colfmt(ud.cols)
 
@@ -111,7 +111,7 @@ func (ud *UnifiedDiff) WriteAdded(rows []*spancompare.Row) error {
 	return nil
 }
 
-func (ud *UnifiedDiff) WriteDeleted(rows []*spancompare.Row) error {
+func (ud *UnifiedDiff) WriteDeleted(rows []*spandbcompare.Row) error {
 	deleted := color.New(colorDeleted).FprintfFunc()
 	cfmt := colfmt(ud.cols)
 
@@ -125,13 +125,13 @@ func (ud *UnifiedDiff) WriteDeleted(rows []*spancompare.Row) error {
 	return nil
 }
 
-func (ud *UnifiedDiff) WriteUpdated(beforeTable, afterTable string, rows []*spancompare.RowDiff) error {
+func (ud *UnifiedDiff) WriteUpdated(before, after string, rows []*spandbcompare.RowDiff) error {
 	deleted := color.New(colorDeleted).FprintfFunc()
 	added := color.New(colorAdded).FprintfFunc()
 	cfmt := colfmt(ud.cols)
 
-	deleted(ud.w, "--- %s\n", beforeTable)
-	added(ud.w, "+++ %s\n", afterTable)
+	deleted(ud.w, "--- %s\n", before)
+	added(ud.w, "+++ %s\n", after)
 
 	for i, rd := range rows {
 		ud.printf(" ************************* %5d. row *************************\n", i)

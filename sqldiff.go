@@ -1,4 +1,4 @@
-package spancompare
+package spandbcompare
 
 import (
 	"fmt"
@@ -7,29 +7,43 @@ import (
 	"time"
 )
 
-func (td *TablesDiff) SQL(changesFor string) ([]string, error) {
-	var sqls []string
-	switch changesFor {
-	case td.Table1:
-		sqls = append(sqls, insertSQL(td.Table1, td.RowsDiff.Rows2Only)...)
-		var updateRows []*Row
-		for _, rd := range td.RowsDiff.DiffRows {
-			updateRows = append(updateRows, rd.Row2)
-		}
-		sqls = append(sqls, updateSQL(td.Table1, updateRows)...)
-		sqls = append(sqls, deleteSQL(td.Table1, td.RowsDiff.Rows1Only)...)
-	case td.Table2:
-		sqls = append(sqls, insertSQL(td.Table1, td.RowsDiff.Rows1Only)...)
-		var updateRows []*Row
-		for _, rd := range td.RowsDiff.DiffRows {
-			updateRows = append(updateRows, rd.Row1)
-		}
-		sqls = append(sqls, updateSQL(td.Table1, updateRows)...)
-		sqls = append(sqls, deleteSQL(td.Table1, td.RowsDiff.Rows2Only)...)
-	default:
-		return nil, fmt.Errorf("changesFor must be '%s' or '%s", td.Table1, td.Table2)
+type SQLDiff struct {
+	RowsDiff *RowsDiff
+	Rows1Table string
+	Rows2Table string
+}
+
+func (sd *SQLDiff) SQL(changesFor string) ([]string, error) {
+	if err := sd.validateChangesFor(changesFor); err != nil {
+		return nil, err
 	}
+
+	var sqls []string
+	rowsAdded := sd.RowsDiff.Rows2Only
+	rowsDeleted := sd.RowsDiff.Rows1Only
+	if changesFor == sd.Rows2Table {
+		rowsAdded, rowsDeleted = rowsDeleted, rowsAdded
+	}
+
+	sqls = append(sqls, insertSQL(changesFor, rowsAdded)...)
+	var updateRows []*Row
+	for _, rd := range sd.RowsDiff.DiffRows {
+		updateRow := rd.Row2
+		if changesFor == sd.Rows2Table {
+			updateRow = rd.Row1
+		}
+		updateRows = append(updateRows, updateRow)
+	}
+	sqls = append(sqls, updateSQL(changesFor, updateRows)...)
+	sqls = append(sqls, deleteSQL(changesFor, rowsDeleted)...)
 	return sqls, nil
+}
+
+func (sd *SQLDiff) validateChangesFor(changesFor string) error {
+	if changesFor != sd.Rows1Table && changesFor != sd.Rows2Table {
+		return fmt.Errorf("chnagesFor must be '%s' or '%s'", sd.Rows1Table, sd.Rows2Table)
+	}
+	return nil
 }
 
 func insertSQL(table string, rows []*Row) []string {

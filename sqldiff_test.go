@@ -1,4 +1,4 @@
-package spancompare
+package spandbcompare
 
 import (
 	"testing"
@@ -45,4 +45,36 @@ func TestDeleteSQL(t *testing.T) {
 	assert.Equal(t, 2, len(sqls))
 	assert.Equal(t, "DELETE FROM `Singers` WHERE `ida` = 'aa' and `idb` = 'ab'", sqls[0])
 	assert.Equal(t, "DELETE FROM `Singers` WHERE `ida` = 'bb' and `idb` = 'bb'", sqls[1])
+}
+
+func TestSQLDiff_SQL(t *testing.T) {
+	pks := []string{"id"}
+	rd := &RowsDiff{
+		Rows1Only: []*Row{{pks, map[string]ColumnValue{"id": "a", "name": "a-name"}}},
+		Rows2Only:[]*Row{{pks, map[string]ColumnValue{"id": "b", "name": "b-name"}}},
+		DiffRows: []*RowDiff{{PrimaryKey{"c"},
+			&Row{pks, map[string]ColumnValue{"id": "c", "name": "c-name"}},
+			&Row{pks, map[string]ColumnValue{"id": "c", "name": "c-name-alt"}},
+		}},
+	}
+	sd := &SQLDiff{
+		RowsDiff:   rd,
+		Rows1Table: "Table1",
+		Rows2Table: "Table2",
+	}
+	sqls1, err := sd.SQL("Table1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, sql := range sqls1 {
+		t.Logf("%s", sql)
+	}
+
+	sqls2, err := sd.SQL("Table2")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, sql := range sqls2 {
+		t.Logf("%s", sql)
+	}
 }

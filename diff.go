@@ -1,15 +1,4 @@
-package spancompare
-
-// TablesDiff represents differences between two tables
-type TablesDiff struct {
-	Table1   string
-	Table2   string
-	RowsDiff *RowsDiff
-}
-
-func (td *TablesDiff) HasDiff() bool {
-	return td.RowsDiff != nil && td.RowsDiff.HasDiff()
-}
+package spandbcompare
 
 // Differences among rows
 // set nil if there is no differences

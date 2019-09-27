@@ -1,4 +1,4 @@
-package spancompare
+package spandbcompare
 
 import (
 	"context"
