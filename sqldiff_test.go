@@ -57,10 +57,9 @@ func TestSQLDiff_SQL(t *testing.T) {
 			&Row{pks, map[string]ColumnValue{"id": "c", "name": "c-name-alt"}},
 		}},
 	}
-	sd := &SQLDiff{
-		RowsDiff:   rd,
-		Rows1Table: "Table1",
-		Rows2Table: "Table2",
+	sd, err := NewSQLDiff(rd, "Table1", "Table2")
+	if err != nil {
+		t.Fatal(err)
 	}
 	sqls1, err := sd.SQL("Table1")
 	if err != nil {

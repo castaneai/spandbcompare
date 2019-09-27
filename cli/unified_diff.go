@@ -52,12 +52,16 @@ func fmtval(v spandbcompare.ColumnValue) string {
 type UnifiedDiff struct {
 	w    io.Writer
 	cols []string
+	rows1Label string
+	rows2Label string
 }
 
-func NewUnifiedDiff(w io.Writer, cols []string) (*UnifiedDiff, error) {
+func NewUnifiedDiff(w io.Writer, cols []string, rows1Label, rows2Label string) (*UnifiedDiff, error) {
 	return &UnifiedDiff{
 		w:    w,
 		cols: cols,
+		rows1Label: rows1Label,
+		rows2Label: rows2Label,
 	}, nil
 }
 
@@ -65,34 +69,33 @@ func (ud *UnifiedDiff) printf(format string, a ...interface{}) {
 	fmt.Fprintf(ud.w, format, a...)
 }
 
-func (ud *UnifiedDiff) Write(diff *spandbcompare.TablesDiff, changesFor string) error {
-	var before, after string
-	var added, deleted []*spandbcompare.Row
-	switch changesFor {
-	case diff.Table1:
-		before = diff.Table1
-		after = diff.Table2
-		added = diff.RowsDiff.Rows2Only
-		deleted = diff.RowsDiff.Rows1Only
-		break
-	case diff.Table2:
-		before = diff.Table2
-		after = diff.Table1
-		added = diff.RowsDiff.Rows1Only
-		deleted = diff.RowsDiff.Rows2Only
-		break
-	default:
-		return fmt.Errorf("changesFor must be %s or %s", diff.Table1, diff.Table2)
+func (ud *UnifiedDiff) Write(rd *spandbcompare.RowsDiff, changesFor string) error {
+	if err := ud.validateChangesFor(changesFor); err != nil {
+		return err
 	}
 
-	if err := ud.WriteUpdated(before, after, diff.RowsDiff.DiffRows); err != nil {
+	before, after := ud.rows1Label, ud.rows2Label
+	rowsAdded, rowsDeleted := rd.Rows2Only, rd.Rows1Only
+	if changesFor == ud.rows2Label {
+		before, after = after, before
+		rowsAdded, rowsDeleted = rowsDeleted, rowsAdded
+	}
+
+	if err := ud.WriteUpdated(before, after, rd.DiffRows); err != nil {
 		return err
 	}
-	if err := ud.WriteAdded(added); err != nil {
+	if err := ud.WriteAdded(rowsAdded); err != nil {
 		return err
 	}
-	if err := ud.WriteDeleted(deleted); err != nil {
+	if err := ud.WriteDeleted(rowsDeleted); err != nil {
 		return err
+	}
+	return nil
+}
+
+func (ud *UnifiedDiff) validateChangesFor(changesFor string) error {
+	if changesFor != ud.rows1Label && changesFor != ud.rows2Label{
+		return fmt.Errorf("chnagesFor must be '%s' or '%s'", ud.rows1Label, ud.rows2Label)
 	}
 	return nil
 }
@@ -135,7 +138,11 @@ func (ud *UnifiedDiff) WriteUpdated(before, after string, rows []*spandbcompare.
 
 	for i, rd := range rows {
 		ud.printf(" ************************* %5d. row *************************\n", i)
-		for cn, cv1 := range rd.Row1.ColumnValues {
+		for _, cn := range ud.cols {
+			cv1, ok := rd.Row1.ColumnValues[cn]
+			if !ok {
+				return fmt.Errorf("key: %v not found on row", cn)
+			}
 			ispk := false
 			for _, pkcn := range rd.Row1.PKCols {
 				if cn == pkcn {

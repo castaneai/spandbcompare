@@ -5,13 +5,11 @@ import (
 	"os"
 	"testing"
 	"time"
-
-	"github.com/castaneai/spancompare"
 )
 
 func TestDiffAdded(t *testing.T) {
 	cols := []string{"id", "name", "age", "created_at"}
-	ud, err := NewUnifiedDiff(os.Stderr, cols)
+	ud, err := NewUnifiedDiff(os.Stderr, cols, "rows1", "rows2")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,7 +25,7 @@ func TestDiffAdded(t *testing.T) {
 
 func TestDiffDeleted(t *testing.T) {
 	cols := []string{"id", "name", "age", "created_at"}
-	ud, err := NewUnifiedDiff(os.Stderr, cols)
+	ud, err := NewUnifiedDiff(os.Stderr, cols, "rows1", "rows2")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,8 +40,8 @@ func TestDiffDeleted(t *testing.T) {
 }
 
 func TestDiffUpdated(t *testing.T) {
-	cols := []string{"id", "name", "age", "created_at"}
-	ud, err := NewUnifiedDiff(os.Stderr, cols)
+	cols := []string{"id1", "id2", "name"}
+	ud, err := NewUnifiedDiff(os.Stderr, cols, "rows1", "rows2")
 	if err != nil {
 		t.Fatal(err)
 	}

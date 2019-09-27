@@ -8,9 +8,17 @@ import (
 )
 
 type SQLDiff struct {
-	RowsDiff *RowsDiff
-	Rows1Table string
-	Rows2Table string
+	rd         *RowsDiff
+	rows1Table string
+	rows2Table string
+}
+
+func NewSQLDiff(rd *RowsDiff, rows1Table, rows2Table string) (*SQLDiff, error) {
+	return &SQLDiff{
+		rd:         rd,
+		rows1Table: rows1Table,
+		rows2Table: rows2Table,
+	}, nil
 }
 
 func (sd *SQLDiff) SQL(changesFor string) ([]string, error) {
@@ -19,17 +27,17 @@ func (sd *SQLDiff) SQL(changesFor string) ([]string, error) {
 	}
 
 	var sqls []string
-	rowsAdded := sd.RowsDiff.Rows2Only
-	rowsDeleted := sd.RowsDiff.Rows1Only
-	if changesFor == sd.Rows2Table {
+	rowsAdded := sd.rd.Rows2Only
+	rowsDeleted := sd.rd.Rows1Only
+	if changesFor == sd.rows2Table {
 		rowsAdded, rowsDeleted = rowsDeleted, rowsAdded
 	}
 
 	sqls = append(sqls, insertSQL(changesFor, rowsAdded)...)
 	var updateRows []*Row
-	for _, rd := range sd.RowsDiff.DiffRows {
+	for _, rd := range sd.rd.DiffRows {
 		updateRow := rd.Row2
-		if changesFor == sd.Rows2Table {
+		if changesFor == sd.rows2Table {
 			updateRow = rd.Row1
 		}
 		updateRows = append(updateRows, updateRow)
@@ -40,8 +48,8 @@ func (sd *SQLDiff) SQL(changesFor string) ([]string, error) {
 }
 
 func (sd *SQLDiff) validateChangesFor(changesFor string) error {
-	if changesFor != sd.Rows1Table && changesFor != sd.Rows2Table {
-		return fmt.Errorf("chnagesFor must be '%s' or '%s'", sd.Rows1Table, sd.Rows2Table)
+	if changesFor != sd.rows1Table && changesFor != sd.rows2Table {
+		return fmt.Errorf("chnagesFor must be '%s' or '%s'", sd.rows1Table, sd.rows2Table)
 	}
 	return nil
 }

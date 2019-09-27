@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/castaneai/spankeys/testutils"
 	"log"
 	"os"
 
@@ -65,15 +64,21 @@ func main() {
 
 func cmdMain(c *cli.Context) error {
 	ctx := context.Background()
-	dsn1 := testutils.DSN(c.GlobalString("server1"))
-	dsn2 := testutils.DSN(c.GlobalString("server2"))
+	dsn1, err := spankeys.NewDSN(c.GlobalString("server1"))
+	if err != nil {
+		return err
+	}
+	dsn2, err := spankeys.NewDSN(c.GlobalString("server2"))
+	if err != nil {
+		return err
+	}
 
-	c1, err := spanner.NewClient(ctx, dsn1)
+	c1, err := spanner.NewClient(ctx, string(dsn1))
 	if err != nil {
 		return err
 	}
 	defer c1.Close()
-	c2, err := spanner.NewClient(ctx, dsn2)
+	c2, err := spanner.NewClient(ctx, string(dsn2))
 	if err != nil {
 		return err
 	}
@@ -114,10 +119,6 @@ func cmdMain(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		if !rd.HasDiff() {
-			log.Printf("No diff found")
-			return nil
-		}
 
 		cols, err := spankeys.GetColumns(ctx, c1, table.Name)
 		if err != nil {
@@ -128,22 +129,66 @@ func cmdMain(c *cli.Context) error {
 			cns = append(cns, col.Name)
 		}
 
-		ud, err := spcli.NewUnifiedDiff(c.App.Writer, cns)
-		if err != nil {
-			return err
+		switch c.GlobalString("difftype") {
+		case "sql":
+			table1 := table.Name
+			table2 := table.Name
+			if err := showSQLDiff(c, cns, rd, table1, table2); err != nil {
+				return err
+			}
+			break
+		default:
+			label1 := fmt.Sprintf("%s on %s", table.Name, dsn1)
+			label2 := fmt.Sprintf("%s on %s", table.Name, dsn2)
+			if err := showUnifiedDiff(c, cns, rd, label1, label2); err != nil {
+				return err
+			}
+			break
 		}
+	}
+	return nil
+}
 
-		cfs := c.GlobalString("changes-for")
-		if cfs != "server1" && cfs != "server2" {
-			return fmt.Errorf("changesFor must be 'server1' or 'server2'")
-		}
-		changesFor := table1
-		if cfs == "server2" {
-			changesFor = table2
-		}
-		if err := ud.Write(diff, changesFor); err != nil {
-			return err
-		}
+func showUnifiedDiff(c *cli.Context, cols []string, rd *spandbcompare.RowsDiff, label1, label2 string) error {
+	cfs := c.GlobalString("changes-for")
+	if cfs != "server1" && cfs != "server2" {
+		return fmt.Errorf("changesFor must be 'server1' or 'server2'")
+	}
+	changesFor := label1
+	if cfs == "server2" {
+		changesFor = label2
+	}
+
+	ud, err := spcli.NewUnifiedDiff(c.App.Writer, cols, label1, label2)
+	if err != nil {
+		return err
+	}
+	if err := ud.Write(rd, changesFor); err != nil {
+		return err
+	}
+	return nil
+}
+
+func showSQLDiff(c *cli.Context, cols []string, rd *spandbcompare.RowsDiff, table1, table2 string) error {
+	cfs := c.GlobalString("changes-for")
+	if cfs != "server1" && cfs != "server2" {
+		return fmt.Errorf("changesFor must be 'server1' or 'server2'")
+	}
+	changesFor := table1
+	if cfs == "server2" {
+		changesFor = table2
+	}
+
+	sd, err := spandbcompare.NewSQLDiff(rd, table1, table2)
+	if err != nil {
+		return err
+	}
+	sqls, err := sd.SQL(changesFor)
+	if err != nil {
+		return err
+	}
+	for _, sql := range sqls {
+		fmt.Fprintln(c.App.Writer, sql)
 	}
 	return nil
 }
