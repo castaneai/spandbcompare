@@ -9,8 +9,7 @@ import (
 	"github.com/castaneai/spankeys"
 
 	"cloud.google.com/go/spanner"
-	"github.com/castaneai/spandbcompare"
-	spcli "github.com/castaneai/spandbcompare/cli"
+	spandbcompare "github.com/castaneai/spandbcompare/pkg"
 
 	"github.com/urfave/cli"
 )
@@ -159,7 +158,7 @@ func showUnifiedDiff(c *cli.Context, cols []string, rd *spandbcompare.RowsDiff, 
 		changesFor = label2
 	}
 
-	ud, err := spcli.NewUnifiedDiff(c.App.Writer, cols, label1, label2)
+	ud, err := spandbcompare.NewUnifiedDiff(c.App.Writer, cols, label1, label2)
 	if err != nil {
 		return err
 	}

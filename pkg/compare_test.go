@@ -1,4 +1,4 @@
-package spandbcompare
+package pkg
 
 import (
 	"testing"

@@ -1,4 +1,4 @@
-package spandbcompare
+package pkg
 
 import (
 	"errors"
@@ -80,11 +80,11 @@ func CompareRows(rows1, rows2 []*Row, cmp RowComparator) (*RowsDiff, error) {
 	rows1Map := rowsToPKMap(rows1)
 	rows2Map := rowsToPKMap(rows2)
 
-	diff := &RowsDiff{}
+	df := &RowsDiff{}
 	for pks, row1 := range rows1Map {
 		row2, exists2 := rows2Map[pks]
 		if !exists2 {
-			diff.Rows1Only = append(diff.Rows1Only, row1)
+			df.Rows1Only = append(df.Rows1Only, row1)
 			continue
 		}
 		rd, err := cmp.Compare(row1, row2)
@@ -92,15 +92,15 @@ func CompareRows(rows1, rows2 []*Row, cmp RowComparator) (*RowsDiff, error) {
 			return nil, err
 		}
 		if rd != nil {
-			diff.DiffRows = append(diff.DiffRows, rd)
+			df.DiffRows = append(df.DiffRows, rd)
 		}
 	}
 	for pks, row2 := range rows2Map {
 		if _, exists1 := rows1Map[pks]; !exists1 {
-			diff.Rows2Only = append(diff.Rows2Only, row2)
+			df.Rows2Only = append(df.Rows2Only, row2)
 		}
 	}
-	return diff, nil
+	return df, nil
 }
 
 func rowsToPKMap(rows []*Row) map[string]*Row {

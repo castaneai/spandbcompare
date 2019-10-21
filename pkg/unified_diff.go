@@ -1,12 +1,10 @@
-package cli
+package pkg
 
 import (
 	"fmt"
 	"io"
 	"strings"
 	"time"
-
-	"github.com/castaneai/spandbcompare"
 
 	"github.com/fatih/color"
 )
@@ -32,7 +30,7 @@ func currentTz() *time.Location {
 	return time.FixedZone(name, offset)
 }
 
-func fmtval(v spandbcompare.ColumnValue) string {
+func fmtval(v ColumnValue) string {
 	// Timestamp 型は format, timezone を統一して表示
 	if v == nil {
 		return "<NULL>"
@@ -50,16 +48,16 @@ func fmtval(v spandbcompare.ColumnValue) string {
 }
 
 type UnifiedDiff struct {
-	w    io.Writer
-	cols []string
+	w          io.Writer
+	cols       []string
 	rows1Label string
 	rows2Label string
 }
 
 func NewUnifiedDiff(w io.Writer, cols []string, rows1Label, rows2Label string) (*UnifiedDiff, error) {
 	return &UnifiedDiff{
-		w:    w,
-		cols: cols,
+		w:          w,
+		cols:       cols,
 		rows1Label: rows1Label,
 		rows2Label: rows2Label,
 	}, nil
@@ -69,7 +67,7 @@ func (ud *UnifiedDiff) printf(format string, a ...interface{}) {
 	fmt.Fprintf(ud.w, format, a...)
 }
 
-func (ud *UnifiedDiff) Write(rd *spandbcompare.RowsDiff, changesFor string) error {
+func (ud *UnifiedDiff) Write(rd *RowsDiff, changesFor string) error {
 	if err := ud.validateChangesFor(changesFor); err != nil {
 		return err
 	}
@@ -79,6 +77,16 @@ func (ud *UnifiedDiff) Write(rd *spandbcompare.RowsDiff, changesFor string) erro
 	if changesFor == ud.rows2Label {
 		before, after = after, before
 		rowsAdded, rowsDeleted = rowsDeleted, rowsAdded
+	}
+
+	deleted := color.New(colorDeleted).FprintfFunc()
+	added := color.New(colorAdded).FprintfFunc()
+	deleted(ud.w, "--- %s\n", before)
+	added(ud.w, "+++ %s\n", after)
+
+	if !rd.HasDiff() {
+		ud.printf("No diff found\n\n")
+		return nil
 	}
 
 	if err := ud.WriteUpdated(before, after, rd.DiffRows); err != nil {
@@ -94,13 +102,13 @@ func (ud *UnifiedDiff) Write(rd *spandbcompare.RowsDiff, changesFor string) erro
 }
 
 func (ud *UnifiedDiff) validateChangesFor(changesFor string) error {
-	if changesFor != ud.rows1Label && changesFor != ud.rows2Label{
+	if changesFor != ud.rows1Label && changesFor != ud.rows2Label {
 		return fmt.Errorf("chnagesFor must be '%s' or '%s'", ud.rows1Label, ud.rows2Label)
 	}
 	return nil
 }
 
-func (ud *UnifiedDiff) WriteAdded(rows []*spandbcompare.Row) error {
+func (ud *UnifiedDiff) WriteAdded(rows []*Row) error {
 	added := color.New(colorAdded).FprintfFunc()
 	cfmt := colfmt(ud.cols)
 
@@ -110,11 +118,11 @@ func (ud *UnifiedDiff) WriteAdded(rows []*spandbcompare.Row) error {
 			added(ud.w, "+ "+cfmt+": %s\n", cn, fmtval(row.ColumnValues[cn]))
 		}
 	}
-	ud.printf("  %d rows\n\n", len(rows))
+	ud.printf("\n %d rows added\n\n", len(rows))
 	return nil
 }
 
-func (ud *UnifiedDiff) WriteDeleted(rows []*spandbcompare.Row) error {
+func (ud *UnifiedDiff) WriteDeleted(rows []*Row) error {
 	deleted := color.New(colorDeleted).FprintfFunc()
 	cfmt := colfmt(ud.cols)
 
@@ -124,17 +132,14 @@ func (ud *UnifiedDiff) WriteDeleted(rows []*spandbcompare.Row) error {
 			deleted(ud.w, "- "+cfmt+": %s\n", cn, fmtval(row.ColumnValues[cn]))
 		}
 	}
-	ud.printf("  %d rows\n\n", len(rows))
+	ud.printf("\n %d rows deleted\n\n", len(rows))
 	return nil
 }
 
-func (ud *UnifiedDiff) WriteUpdated(before, after string, rows []*spandbcompare.RowDiff) error {
+func (ud *UnifiedDiff) WriteUpdated(before, after string, rows []*RowDiff) error {
 	deleted := color.New(colorDeleted).FprintfFunc()
 	added := color.New(colorAdded).FprintfFunc()
 	cfmt := colfmt(ud.cols)
-
-	deleted(ud.w, "--- %s\n", before)
-	added(ud.w, "+++ %s\n", after)
 
 	for i, rd := range rows {
 		ud.printf(" ************************* %5d. row *************************\n", i)
@@ -163,6 +168,6 @@ func (ud *UnifiedDiff) WriteUpdated(before, after string, rows []*spandbcompare.
 			added(ud.w, "+ "+cfmt+": %s\n", cn, fmtval(cv2))
 		}
 	}
-	ud.printf("  %d rows\n\n", len(rows))
+	ud.printf("\n %d rows updated\n\n", len(rows))
 	return nil
 }

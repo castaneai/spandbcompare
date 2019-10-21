@@ -1,4 +1,4 @@
-package spandbcompare
+package pkg
 
 import (
 	"testing"
@@ -51,7 +51,7 @@ func TestSQLDiff_SQL(t *testing.T) {
 	pks := []string{"id"}
 	rd := &RowsDiff{
 		Rows1Only: []*Row{{pks, map[string]ColumnValue{"id": "a", "name": "a-name"}}},
-		Rows2Only:[]*Row{{pks, map[string]ColumnValue{"id": "b", "name": "b-name"}}},
+		Rows2Only: []*Row{{pks, map[string]ColumnValue{"id": "b", "name": "b-name"}}},
 		DiffRows: []*RowDiff{{PrimaryKey{"c"},
 			&Row{pks, map[string]ColumnValue{"id": "c", "name": "c-name"}},
 			&Row{pks, map[string]ColumnValue{"id": "c", "name": "c-name-alt"}},

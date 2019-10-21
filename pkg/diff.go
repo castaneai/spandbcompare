@@ -1,4 +1,4 @@
-package spandbcompare
+package pkg
 
 // Differences among rows
 // set nil if there is no differences
