@@ -2,8 +2,6 @@ package pkg
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/castaneai/spankeys"
 
 	"cloud.google.com/go/spanner"
@@ -32,7 +30,6 @@ func NewDataSource(ctx context.Context, client *spanner.Client, table string) (*
 }
 
 func (s *DataSource) Rows(ctx context.Context, stmt spanner.Statement) ([]*Row, error) {
-	stmt := spanner.NewStatement(fmt.Sprintf("SELECT * FROM `%s`", s.table))
 	var rows []*Row
 	if err := s.client.Single().Query(ctx, stmt).Do(func(r *spanner.Row) error {
 		row, err := makeRow(r, s.pkColNames)
