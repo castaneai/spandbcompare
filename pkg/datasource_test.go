@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"cloud.google.com/go/spanner"
@@ -26,6 +27,7 @@ func TestDataSource_Rows(t *testing.T) {
 		t.Fatal(err)
 	}
 	table := "Singers"
+	stmt := spanner.NewStatement(fmt.Sprintf("SELECT * FROM `%s`", table))
 
 	ds, err := NewDataSource(ctx, c, table)
 	if err != nil {
@@ -33,7 +35,7 @@ func TestDataSource_Rows(t *testing.T) {
 	}
 
 	{
-		rows, err := ds.Rows(ctx)
+		rows, err := ds.Rows(ctx, stmt)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -51,7 +53,7 @@ func TestDataSource_Rows(t *testing.T) {
 	}
 
 	{
-		rows, err := ds.Rows(ctx)
+		rows, err := ds.Rows(ctx, stmt)
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -31,7 +31,7 @@ func NewDataSource(ctx context.Context, client *spanner.Client, table string) (*
 	}, nil
 }
 
-func (s *DataSource) Rows(ctx context.Context) ([]*Row, error) {
+func (s *DataSource) Rows(ctx context.Context, stmt spanner.Statement) ([]*Row, error) {
 	stmt := spanner.NewStatement(fmt.Sprintf("SELECT * FROM `%s`", s.table))
 	var rows []*Row
 	if err := s.client.Single().Query(ctx, stmt).Do(func(r *spanner.Row) error {

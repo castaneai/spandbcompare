@@ -105,11 +105,12 @@ func cmdMain(c *cli.Context) error {
 			return err
 		}
 
-		rows1, err := ds1.Rows(ctx)
+		stmt := spanner.NewStatement(fmt.Sprintf("SELECT * FROM `%s`", table.Name))
+		rows1, err := ds1.Rows(ctx, stmt)
 		if err != nil {
 			return err
 		}
-		rows2, err := ds2.Rows(ctx)
+		rows2, err := ds2.Rows(ctx, stmt)
 		if err != nil {
 			return err
 		}
