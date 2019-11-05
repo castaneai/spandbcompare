@@ -39,7 +39,7 @@ func TestDiffDeleted(t *testing.T) {
 }
 
 func TestDiffUpdated(t *testing.T) {
-	cols := []string{"id1", "id2", "name"}
+	cols := []string{"id1", "id2", "name", "age"}
 	ud, err := NewUnifiedDiff(os.Stderr, cols, "rows1", "rows2")
 	if err != nil {
 		t.Fatal(err)

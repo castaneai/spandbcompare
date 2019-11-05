@@ -144,10 +144,7 @@ func (ud *UnifiedDiff) WriteUpdated(before, after string, rows []*RowDiff) error
 	for i, rd := range rows {
 		ud.printf(" ************************* %5d. row *************************\n", i)
 		for _, cn := range ud.cols {
-			cv1, ok := rd.Row1.ColumnValues[cn]
-			if !ok {
-				return fmt.Errorf("key: %v not found on row", cn)
-			}
+			cv1, has1:= rd.Row1.ColumnValues[cn]
 			ispk := false
 			for _, pkcn := range rd.Row1.PKCols {
 				if cn == pkcn {
@@ -160,9 +157,12 @@ func (ud *UnifiedDiff) WriteUpdated(before, after string, rows []*RowDiff) error
 				continue
 			}
 
-			cv2, ok := rd.Row2.ColumnValues[cn]
-			if !ok {
+			cv2, has2 := rd.Row2.ColumnValues[cn]
+			if has1 && !has2 {
 				return fmt.Errorf("row1[%s] exists, but row2[%s] not found", cn, cn)
+			}
+			if !has1 && has2 {
+				return fmt.Errorf("row2[%s] exists, but row1[%s] not found", cn, cn)
 			}
 			deleted(ud.w, "- "+cfmt+": %s\n", cn, fmtval(cv1))
 			added(ud.w, "+ "+cfmt+": %s\n", cn, fmtval(cv2))
