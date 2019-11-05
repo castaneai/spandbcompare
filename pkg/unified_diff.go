@@ -158,6 +158,9 @@ func (ud *UnifiedDiff) WriteUpdated(before, after string, rows []*RowDiff) error
 			}
 
 			cv2, has2 := rd.Row2.ColumnValues[cn]
+			if !has1 && !has2 {
+				continue
+			}
 			if has1 && !has2 {
 				return fmt.Errorf("row1[%s] exists, but row2[%s] not found", cn, cn)
 			}
